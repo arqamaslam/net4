@@ -1,0 +1,22 @@
+@charset "utf-8";
+/* CSS Document */
+
+.top-nav a {border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; background-image:url(../imgs/top-btn-ie.png); background-repeat:repeat-x; }
+
+
+/*
+.top-nav {margin-top: 7px;}
+.user {margin:10px 0 0 0;}
+.help {margin:10px 0 0 0;}
+.user a {background-position: right -22px; }
+.help a {background-position: left -45px;}
+.numbers-box  {padding-top:3px;}
+.nb-2 {padding-top:2px;}
+.fields { padding-top:3px;}
+.title {  height:11px; padding:9px 6px 0 6px; margin:0  6px 0 6px;}
+
+
+
+.footer-link {margin-top:17px;}
+.copyright {margin-top:3px;}
+*/

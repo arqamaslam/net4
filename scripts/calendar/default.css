@@ -1,0 +1,179 @@
+
+#date1-gldp{ left:0px!important; top:27px !important;z-index:10000;}
+.gldp-default
+{
+	float:left;
+	background-color:#fff !important;
+	font-size:12px !important;
+	border-radius:4px; -moz-border-radius:4px; -webkit-border-radius:4px;  border:1px solid #e0e0e0; -moz-box-shadow:0 0 8px 3px rgba(127,127,127,0.1); -webkit-box-shadow:0 0 8px 3px rgba(127,127,127,0.1);   box-shadow:0 0 8px 3px rgba(127,127,127,0.1);
+}
+
+/* Table style */
+.gldp-default table
+{
+	border-spacing:0px;
+	border-collapse:inherit;
+}
+
+/* Default row height */
+.gldp-default tr
+{
+	line-height:29px;
+}
+
+/* Default style of cell */
+.gldp-default td
+{
+	margin:0;
+	padding:0;
+	width:29px;
+	text-align:center;
+	border-left: 1px solid #E0E0E0;
+	border-top: 1px solid #E0E0E0;
+}
+
+/* Previous and Next arrows */
+.gldp-default-prevnext
+{
+	font-family:"times new roman";
+	color:#222;
+	cursor:pointer;
+	font-weight:bold;
+	background:#fff;
+	height:39px;
+	border:none !important;
+	border-radius:4px; -moz-border-radius:4px; -webkit-border-radius:4px;
+	
+    
+   
+}
+.gldp-default-prevnext .next
+{
+background-image: url("../../imgs/cal-arrow.gif");
+    background-position: right 0;
+    height: 11px;
+    margin-left: 12px;
+    width: 8px !important;
+	border:none !important;
+	
+}
+.gldp-default-prevnext .prev
+{
+background-image: url("../../imgs/cal-arrow.gif");
+    background-position: left 0;
+    height: 11px;
+    margin-left: 12px;
+    width: 8px !important;
+	border:none !important;
+	}
+	
+.gldp-default-prevnext .prev:hover
+{ background-position: left bottom;}
+	
+.gldp-default-prevnext .next:hover
+{ background-position: right bottom;}	
+	
+	
+/* Month Year title */
+.gldp-default-monyear
+{ background: none repeat scroll 0 0 #FFFFFF;
+    color: #A8A8A8;
+    font-size: 15px !important;
+    font-weight: bold;
+    text-transform: uppercase;
+	border:none !important;
+}
+
+/* Days of the week (Sun, Mon, ...) */
+.gldp-default-dow
+{
+	background-color:#EEEFEE;
+	color:#8A8A8A;
+	font-size:10px !important;
+	line-height: 19px !important;
+	border:none !important;
+	text-transform:uppercase;
+}
+
+.gldp-default-dow td
+{
+	
+	border-left:none !important;
+}
+
+/* Selectable days */
+.gldp-default-day
+{
+	background-color:#FFFFFF;
+	color:#8A8A8A;
+	font-weight:bold;
+	font-size:12px;
+	background-image: url(../../imgs/calendar-btn.png);
+	background-repeat: repeat-x;
+	background-position: left top;
+	
+}
+.gldp-default-day-hover
+{
+	background-color:#fff;
+	color:#CC1D15;
+	cursor:pointer;
+	font-weight:bold;
+	font-size:12px;
+}
+
+/* Selected days */
+.gldp-default-selected
+{
+	background-color:#fee;
+	color:#222;
+}
+
+/* Today */
+.gldp-default-today
+{
+	background-color:#d61c14;
+	background-image: url(../../imgs/calendar-btn.png);
+	background-position: left bottom;
+	color: white;
+	text-shadow: none;
+	font-weight:bold;
+	
+}
+.gldp-default-today-hover
+{
+	background-color:#d61c14;
+	background-image: url(../../imgs/calendar-btn.png);
+	background-position: left bottom;
+	color:#fff;
+	cursor:pointer;
+	font-weight:bold;
+	text-shadow:none;
+}
+
+/* Weekends */
+.gldp-default-sat, .gldp-default-sun
+{
+	background-color:#FFFFFF;
+	color:#8A8A8A;
+	font-weight:bold;
+	background-image: url(../../imgs/calendar-btn.png);
+	background-repeat: repeat-x;
+	background-position: left top
+}
+.gldp-default-sat-hover, .gldp-default-sun-hover
+{
+	background-color:#fff;
+	color:#CD1E16;
+	cursor:pointer;
+	font-weight:bold;
+}
+
+/* Non-selectable day.  Includes:previous/next month days and days that fall in the allowOld and endDate conditions */
+.gldp-default-noday
+{
+	background-color:#F1F1F1;
+	color:#CECDCD;
+	cursor:default;
+	font-weight:bold;
+}

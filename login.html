@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Netagenda - Your Co-Pilot for Getting Things Done</title>
+<link rel="stylesheet" type="text/css" href="scripts/main.css"/>
+<link rel="stylesheet" type="text/css" href="scripts/pages.css"/>
+<link href='http://fonts.googleapis.com/css?family=Exo' rel='stylesheet' type='text/css'>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="scripts/style-ie.css"/><![endif]-->
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script type="text/javascript" src="jquery-1.4.2.min.js"></script>
+<script type="text/javascript">
+$(window).bind("load", function() { 
+
+	var footerHeight = 0,
+       footerTop = 0,
+	$footer = $("#footer");
+	
+	// Run Once the page is loaded
+	positionFooter();
+
+	// This function keeps the footer at the bottom of the page
+	// without overlaping it's top elements.
+	function positionFooter() {
+	
+		footerHeight = $footer.height();
+		footerTop = ($(window).scrollTop()+$(window).height()-footerHeight)+"px";
+		documentHeight = $(document.body).height();
+		
+		// If footer absolute account for it's height
+		if($footer.css("position") == "absolute"){
+			documentHeight += footerHeight;
+		}
+		
+		if ( documentHeight < $(window).height()) {
+		   $footer.css({
+				position: "absolute",
+				top: footerTop
+		   })
+		} else {
+		   $footer.css({
+				position: "static"
+		   })
+		}
+	
+	}
+	
+	$(window)
+		.scroll(positionFooter)
+		.resize(positionFooter)
+
+});
+
+</script>
+<script>
+$(document).ready(function () {
+  $('#password-clear').show();
+  $('#password-password').hide();
+		
+  $('#password-clear').focus(function() {
+    $('#password-clear').hide();
+    $('#password-password').show();
+    $('#password-password').focus();
+  });
+  $('#password-password').blur(function() {
+    if($('#password-password').val() == '') {
+      $('#password-clear').show();
+      $('#password-password').hide();
+    }
+  });
+});
+</script>
+
+<style>
+body,html{height: 90%;}
+#password-clear {display: none;}
+</style>
+
+</head>
+<body style="background-image:url(imgs/texture.png),url(imgs/login-page-bg.gif); min-height:450px;">
+
+<!--============================= Header =============================-->
+
+<div id="top-bar">
+	<div class="btn-left">
+		<div class="top-nav top-nav2 top-nav-selected"><a href="#">SIGN IN</a></div>
+    </div>
+	<div class="right-nav">
+        <div class="help"><a href="#" style="color:#c9c9c9;">help</a></div>
+  	</div>
+</div>
+
+<div id="header"><a href="index.html"></a></div>
+
+<!--============================= Login =============================-->
+
+<div id="wrapper2">
+	<div id="login-container">
+		<div class="login-holder">
+			<div class="loginbox">
+            	<div class="login-title">Sign in to your account</div>
+                <div class="logform-holder">
+                	<div class="login-fields">
+                    	<input type="text" class="fields4"  onfocus="if(this.value == 'Email') {this.value = '';}" onblur="if (this.value == '') {this.value = 'Email';}" value="Email" name="Email"  />
+                        <div class="sep-line"></div>
+                        <input id="password-clear" type="text" class="fields5"  onfocus="if(this.value == 'Password') {this.value = '';}" onblur="if (this.value == '') {this.value = 'Password';}" value="Password" name="for"/>
+                        <input id="password-password" type="password" class="fields5" value="" name="for" />
+                    </div>
+                    <div class="login-dotted-sep"></div>
+                    <input  class="login-button" name="submit" type="button" value="Sign In" style="height:36px;" />
+                </div>
+            </div>
+            <div class="forget-link"><a href="#">Forget Password?</a></div>
+            <div class="login-shadow"></div>
+		</div>
+	</div>
+</div>
+
+<!--============================= Footer =============================-->
+
+<div class="clear"></div>
+
+<div id="footer" style="margin-top:-1px;">
+  <div class="footer-l">
+      <div class="footer-logo"></div>
+      <div style="float:left;" >
+        <div class="footer-nav">
+            <div class="footer-link"><a href="#">Help</a></div>
+            <div class="footer-link"><a href="#">Terms of Service</a></div>
+            <div class="footer-link"><a href="#">Privacy Policy</a></div>
+        </div>
+        <div class="clear"></div>
+        <div class="copyright">© 2012 Netagenda.</div>
+        </div>
+  </div>
+  <div class="footer-r">
+  	<div class="social">
+		<a class="fb" href="#"></a>
+        <a class="twitter" href="#"></a>
+  	</div>
+	<div class="footer-text">Follow us:</div>
+  </div>
+</div>
+
+</body>
+</html>

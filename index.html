@@ -1,0 +1,3017 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Netagenda - Your Co-Pilot for Getting Things Done</title>
+<link rel="stylesheet" type="text/css" href="scripts/main.css"/>
+<link rel="stylesheet" type="text/css" href="scripts/calendar/default.css"/>
+<link href='http://fonts.googleapis.com/css?family=Exo' rel='stylesheet' type='text/css'>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="scripts/style-ie.css"/><![endif]-->
+<script src="scripts/jquery-latest.js"></script>
+<script type="text/javascript" src="scripts/custom.js"></script>
+<script src="scripts/jquery.autocomplete-min.js" type="text/javascript"></script>
+<script src="scripts/ui/jquery.ui.core.js"></script>
+<script src="scripts/ui/jquery.ui.widget.js"></script>
+<script src="scripts/ui/jquery.ui.button.js"></script>
+<script src="scripts/ui/jquery.ui.position.js"></script>
+<script src="scripts/ui/jquery.ui.autocomplete.js"></script>
+	
+<script>
+	(function( $ ) {
+		$.widget( "ui.combobox", {
+			_create: function() {
+				var input,
+					self = this,
+					select = this.element.hide(),
+					selected = select.children( ":selected" ),
+					value = selected.val() ? selected.text() : "",
+					wrapper = this.wrapper = $( "<span>" )
+						.addClass( "ui-combobox" )
+						.insertAfter( select );
+
+				input = $( "<input>" )
+					.appendTo( wrapper )
+					.val( value )
+					.addClass( "ui-state-default ui-combobox-input" )
+					.autocomplete({
+						delay: 0,
+						minLength: 0,
+						source: function( request, response ) {
+							var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
+							response( select.children( "option" ).map(function() {
+								var text = $( this ).text();
+								if ( this.value && ( !request.term || matcher.test(text) ) )
+									return {
+										label: text.replace(
+											new RegExp(
+												"(?![^&;]+;)(?!<[^<>]*)(" +
+												$.ui.autocomplete.escapeRegex(request.term) +
+												")(?![^<>]*>)(?![^&;]+;)", "gi"
+											), "<strong>$1</strong>" ),
+										value: text,
+										option: this
+									};
+							}) );
+						},
+						
+						select: function( event, ui ) {
+							ui.item.option.selected = true;
+							self._trigger( "selected", event, {
+								item: ui.item.option
+								
+							});
+							
+							
+						},
+						change: function( event, ui ) {
+							alert("event");
+							if ( !ui.item ) {
+								var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( $(this).val() ) + "$", "i" ),
+									valid = false;
+								select.children( "option" ).each(function() {
+									if ( $( this ).text().match( matcher ) ) {
+										this.selected = valid = true;
+										return false;
+									}
+								});
+								if ( !valid ) {
+									// remove invalid value, as it didn't match anything
+									$( this ).val( "" );
+									select.val( "" );
+									input.data( "autocomplete" ).term = "";
+									return false;
+								}
+							}
+						}
+					})
+					.addClass( "ui-widget ui-widget-content ui-corner-left" );
+
+				input.data( "autocomplete" )._renderItem = function( ul, item ) {
+					return $( "<li></li>" )
+						.data( "item.autocomplete", item )
+						.append( "<a>" + item.label + "</a>" )
+						.appendTo( ul );
+				};
+
+				$( "<a>" )
+				
+					.attr( "tabIndex", -1 )
+					.attr( "title", "Show All Items" )
+					
+					.addClass("ui-button")
+					.appendTo( wrapper )
+					.button({
+						icons: {
+							primary: "ui-icon-triangle-1-s"
+						},
+						text: false
+					})
+					.removeClass( "ui-corner-all" )
+					.addClass( "ui-corner-right ui-combobox-toggle" )
+					.click(function() {
+						// close if already visible
+						if ( input.autocomplete( "" ).is( ":visible" ) ) {
+							alert( "event" );
+							return;
+						}
+
+						// work around a bug (likely same cause as #5265)
+						$( this ).blur();
+
+						// pass empty string as value to search for, displaying all results
+						input.autocomplete( "search", "" );
+						input.focus();
+					});
+			},
+
+			destroy: function() {
+				this.wrapper.remove();
+				this.element.show();
+				$.Widget.prototype.destroy.call( this );
+			}
+		});
+	})( jQuery );
+
+	$(function() {
+		
+		$( ".search" ).combobox();
+		$( ".tasks-for" ).combobox();
+		
+		/*$("input.ui-state-default").val('For');
+		$("input.ui-state-default").focus(function(){
+		if($(this).val()=='For')
+		{
+		$(this).val('');
+		}
+		});
+		$("input.ui-state-default").blur(function(){
+		if($(this).val()=='')
+		{
+		$(this).val('For');
+		}
+		});
+*/		
+		$("#filter input.ui-state-default").val('Search Task...');
+		$("#filter input.ui-state-default").focus(function(){
+		if($(this).val()=='Search Task...')
+		{
+		$(this).val('');
+		}
+		});
+		$("#filter input.ui-state-default").blur(function(){
+		if($(this).val()=='')
+		{
+		$(this).val('Search Task...');
+		}
+		});
+	});
+
+$(function() {
+		var availableTags = [
+			"ActionScript",
+			"AppleScript",
+			"Asp",
+			"BASIC",
+			"C",
+			"C++",
+			"Clojure",
+			"COBOL",
+			"ColdFusion",
+			"Erlang",
+			"Fortran",
+			"Groovy",
+			"Haskell",
+			"Java",
+			"JavaScript",
+			"Lisp",
+			"Perl",
+			"PHP",
+			"Python",
+			"Ruby",
+			"Scala",
+			"Scheme"
+		];
+		function split( val ) {
+			return val.split( /,\s*/ );
+		}
+		function extractLast( term ) {
+			return split( term ).pop();
+		}
+
+		$( "#combobox, #combobox2, #combobox3" )
+			// don't navigate away from the field on tab when selecting an item
+			.bind( "keydown", function( event ) {
+				if ( event.keyCode === $.ui.keyCode.TAB &&
+						$( this ).data( "autocomplete" ).menu.active ) {
+					event.preventDefault();
+				}
+			})
+			.autocomplete({
+				minLength: 0,
+				source: function( request, response ) {
+					// delegate back to autocomplete, but extract the last term
+					response( $.ui.autocomplete.filter(
+						availableTags, extractLast( request.term ) ) );
+				},
+				focus: function() {
+					// prevent value inserted on focus
+					return false;
+				},
+				select: function( event, ui ) {
+					var terms = split( this.value );
+					// remove the current input
+					terms.pop();
+					// add the selected item
+					terms.push( ui.item.value );
+					// add placeholder to get the comma-and-space at the end
+					terms.push( "" );
+					this.value = terms.join( ", " );
+					return false;
+				}
+			});
+	});
+</script>
+
+<script type="text/javascript">
+  WebFontConfig = {
+    google: { families: [ 'Exo::latin' ] }
+  };
+  (function() {
+    var wf = document.createElement('script');
+    wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
+      '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+    wf.type = 'text/javascript';
+    wf.async = 'true';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(wf, s);
+  })(); 
+</script>
+
+<script>
+onload = function() {
+	var t = $('.comment-field,.message')[0];
+	var offset= !window.opera ? (t.offsetHeight - t.clientHeight) : (t.offsetHeight + parseInt(window.getComputedStyle(t, null).getPropertyValue('border-top-width'))) ;
+
+	var resize 	= function(t) {
+		t.style.height = 'auto';
+		t.style.height = (t.scrollHeight  + offset ) + 'px';	
+	}
+
+	t.addEventListener && t.addEventListener('input', function(event) {
+		resize(t);
+	});
+
+	t['attachEvent']  && t.attachEvent('onkeyup', function() {
+		resize(t);
+	});
+}
+</script>
+
+<script type="text/javascript" src="scripts/calendar/jquery.js"></script>
+<script type="text/javascript" src="scripts/calendar/glDatePicker.js"></script>
+
+<script>
+$ab=jQuery.noConflict();
+$ab(document).ready(function(){
+var myDate = new Date();
+var curdate =myDate.getDate() + '.' +(myDate.getMonth()+1) + '.' + myDate.getFullYear();
+$ab("#date1").val(curdate);
+$ab("#date1").glDatePicker();
+});
+</script>
+
+<script>
+onload = function() {
+	var t = document.getElementsByTagName('textarea')[0];
+	var offset= !window.opera ? (t.offsetHeight - t.clientHeight) : (t.offsetHeight + parseInt(window.getComputedStyle(t, null).getPropertyValue('border-top-width'))) ;
+
+	var resize 	= function(t) {
+		t.style.height = 'auto';
+		t.style.height = (t.scrollHeight  + offset ) + 'px';	
+	}
+
+	t.addEventListener && t.addEventListener('input', function(event) {
+		resize(t);
+	});
+
+	t['attachEvent']  && t.attachEvent('onkeyup', function() {
+		resize(t);
+	});
+}
+</script>
+
+<script>
+
+VIGET.fileInputs = function() {
+  var $this = $(this),
+      $val = $this.val(),
+      valArray = $val.split('\\'),
+      newVal = valArray[valArray.length-1],
+      $button = $this.siblings('input-file'),
+      $fakeFile = $this.siblings('.attachments');
+  if(newVal !== '') {
+    $button.text('File Chosen');
+    if($fakeFile.length === 0) {
+      $button.after('' + newVal + '');
+    } else {
+      $fakeFile.text(newVal);
+    }
+  }
+};
+ 
+$(document).ready(function() {
+  $('.attachments input[type=file]')
+  .bind('change focus click', VIGET.fileInputs);
+});
+
+
+</script>
+
+</head>
+<body>
+
+<!--=============================Details Popup=============================-->
+
+<div class="popup">
+    <div class="details-popup">
+        <div>
+            <div>
+                <a href="#" class="close3"></a>	
+                <div class="title12">Task Title</div>
+            </div>
+            <div class="clear"></div>
+            <div class="h-sep"></div>
+            <textarea placeholder="" class="textarea1"></textarea>
+            <div class="button-holder">
+                <input name="post" type="button" class="button1" value="Post"/>
+            </div>
+        </div>
+    </div>
+    <div class="white-bg"></div>
+</div>
+
+<!--=============================Header=============================-->
+
+<div class="loading" style="display:none;">LOADING...</div>
+<div id="top-bar">
+	<div class="btn-left">
+		<div class="top-nav top-nav2 top-nav-selected"><a href="#">TASKS</a></div>
+		<div class="top-nav"><a href="#">ADMINISTRATIVE</a></div>
+		<div class="top-nav"><a href="#">ACCESS</a></div>
+    </div>
+	<div class="right-nav">
+        <div class="user-icon"></div>
+        <div class="user"><a href="#" style="color:#c9c9c9;">Heiner Werner</a></div>
+        <div class="v-separation"></div>
+        <div class="help"><a href="#" style="color:#c9c9c9;">help</a></div>
+  	</div>
+</div>
+
+<div id="header"><a href="index.html"></a></div>
+
+<!--=============================Left=============================-->
+
+<div id="wrapper">
+	<div id="filter" class="my_column">
+		<form method="get">
+			<select id="search_box" class="search">
+				<option value="">Select one...</option>
+				<option value="ActionScript">ActionScript</option>
+				<option value="AppleScript">AppleScript</option>
+				<option value="Asp">Asp</option>
+				<option value="BASIC">BASIC</option>
+				<option value="C">C</option>
+				<option value="C++">C++</option>
+				<option value="Clojure">Clojure</option>
+				<option value="COBOL">COBOL</option>
+				<option value="ColdFusion">ColdFusion</option>
+				<option value="Erlang">Erlang</option>
+				<option value="Fortran">Fortran</option>
+				<option value="Groovy">Groovy</option>
+				<option value="Haskell">Haskell</option>
+				<option value="Java">Java</option>
+				<option value="JavaScript">JavaScript</option>
+				<option value="Lisp">Lisp</option>
+				<option value="Perl">Perl</option>
+				<option value="PHP">PHP</option>
+				<option value="Python">Python</option>
+				<option value="Ruby">Ruby</option>
+				<option value="Scala">Scala</option>
+				<option value="Scheme">Scheme</option>
+			</select>
+		</form>
+		<div class="h-separation"></div>
+    	<div class="settings">
+    		<div class="setting-options">
+            	<div class="title">setting name</div>
+                <div class="numbers-box">9</div>
+                <div class="delete"><a href="#"></a></div>
+                <div class="reset"><a href="#"></a></div>
+             </div>
+        	<div class="keywords">
+        		<div class="keyword"></div>
+            	<div class="keyword"><a href="#">Schlagworte: netagenda. Programmierung</a></div>
+            	<div class="keyword"><a href="#">keyword keywords</a></div>
+            	<div class="keyword"><a href="#">Due: Today</a></div>
+            	<div class="keyword"><a href="#">For: September 2011</a></div>
+        	</div>
+    	</div>
+		<div class="clear"></div>
+		<div class="h-separation"></div>
+		<div class="setting-dropdown">
+            <div class="selectBox6" style="display:none;">
+				<select id="source6" name="a" class="drop_down">
+				<option class="option_hover" value="Option 1" >Setting Name</option>
+				<option class="option_hover" selected="selected" value="Option 2">Saved 2</option>
+				<option class="option_hover" value="Option 3">Saved 3</option>
+				</select>
+			</div>
+			<div id="selectBox6_new"></div>
+		</div>
+	
+		<div class="h-separation"></div>
+		<div class="filters">
+    		<div class="filter-select"><a class="filter-select" href="#"><input type="checkbox" checked="checked" style="display:none;" /><div class="title2">INPUT</div><div class="nb-2">12</div></a></div>
+        	<div class="filter-select"><a class="filter-select" href="#"><input type="checkbox" style="display:none;" /><div class="title2">updates</div><div class="nb-2">0</div></a></div>
+        	<div class="filter-select"><a class="filter-select" href="#"><input type="checkbox" checked="checked" style="display:none;" /><div class="title2">memories</div><div class="nb-2">8</div></a></div>
+        	<div class="filter-select"><a class="filter-select" href="#"><input type="checkbox" style="display:none;" /><div class="title2">active</div><div class="nb-2">655</div></a></div>
+        	<div class="filter-select"><a class="filter-select" href="#"><input type="checkbox" checked="checked" style="display:none;" /><div class="title2">completed</div><div class="nb-2">75</div></a></div>
+		</div>
+    	<div class="h-separation"></div>
+    	<div class="filter-container">
+    		<button id="slideToggle" class="title3">DUE</button>
+        	<div class="clear"></div>
+        	<div class="sub slideTogglebox"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Overdue</div></a></div>
+			<div class="sub slideTogglebox"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Today sample text line with some extra-text-in-it</div></a></div>
+			<div class="sub slideTogglebox"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">September 2011</div></a></div>
+			<div class="sub slideTogglebox"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">January 2012</div></a></div>
+			<div class="sub slideTogglebox"  style="padding-bottom:11px;"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">October 2010</div></a></div>
+		</div>
+   
+		<div class="filter-container">
+			<button id="slideToggle_from" class="title4">FROM</button>
+			<div class="clear"></div>
+			<div class="sub slideTogglebox_from"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Overdue</div></a></div>
+			<div class="sub slideTogglebox_from"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Today</div></a></div>
+			<div class="sub slideTogglebox_from"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">September 2011</div></a></div>
+			<div class="sub slideTogglebox_from"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">January 2012</div></a></div>
+			<div class="sub slideTogglebox_from"  style="padding-bottom:11px;"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">October 2010</div></a></div>
+		</div>
+	
+		<div class="filter-container">
+			<button id="slideToggle_for" class="title5">FOR</button>
+			<div class="clear"></div>
+			<div class="sub slideTogglebox_for"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Overdue</div></a></div>
+			<div class="sub slideTogglebox_for"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Today</div></a></div>
+			<div class="sub slideTogglebox_for"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">September 2011</div></a></div>
+			<div class="sub slideTogglebox_for"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">January 2012</div></a></div>
+			<div class="sub slideTogglebox_for"  style="padding-bottom:11px;"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">October 2010</div></a></div>
+		</div>
+	
+		<div class="filter-container">
+			<button id="slideToggle_tags" class="title6">TAGS</button>
+			<div class="clear"></div>
+			<div class="sub slideTogglebox_tags"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Overdue</div></a></div>
+			<div class="sub slideTogglebox_tags"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Today</div></a></div>
+			<div class="sub slideTogglebox_tags"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">September 2011</div></a></div>
+			<div class="sub slideTogglebox_tags"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">January 2012</div></a></div>
+			<div class="sub slideTogglebox_tags"  style="padding-bottom:11px;"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">October 2010</div></a></div>
+		</div>
+	
+		<div class="filter-container">
+			<button id="slideToggle_updates" class="title7">UPDATES</button>
+			<div class="clear"></div>
+			<div class="sub slideTogglebox_updates"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Overdue</div></a></div>
+			<div class="sub slideTogglebox_updates"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Today</div></a></div>
+			<div class="sub slideTogglebox_updates"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">September 2011</div></a></div>
+			<div class="sub slideTogglebox_updates"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">January 2012</div></a></div>
+			<div class="sub slideTogglebox_updates"  style="padding-bottom:11px;"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">October 2010</div></a></div>
+		</div>
+	
+		<div class="filter-container">
+			<button id="slideToggle_creation_date" class="title8">CREATION DATE</button>
+			<div class="clear"></div>
+            
+			<div class="sub slideTogglebox_creation_date">
+            	<input type="checkbox" style="display:none;" />
+            	<a href="#"><div class="numbers">999</div><div class="sub-options">netagenda, programmierung this is a another long line</div></a>   
+            </div>
+			<div class="sub slideTogglebox_creation_date"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">Today</div></a></div>
+			<div class="sub slideTogglebox_creation_date"><input type="checkbox" checked="checked" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">September 2012</div></a></div>
+			<div class="sub slideTogglebox_creation_date"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">January 2012</div></a></div>
+			<div class="sub slideTogglebox_creation_date"  style="padding-bottom:11px;"><input type="checkbox" style="display:none;" /><a href="#"><div class="numbers">12</div><div class="sub-options">October 2010</div></a></div>
+		</div>
+	</div>
+
+	<!--=============================Right=============================-->
+
+	<div id="Right">
+		<div id="top">
+			<div id="slideTogglea" class="notifications"><a class="undo" href="#"></a><div class="p1"><a href="#">02.09.2012 01:47: (Task test) I've deleted the task.</a></div></div>
+      		<div class="dropdown3">
+        		<div class="slide2"><a class="undo" href="#"></a><a href="#">02.09.2012 01:47: (Task test) I've deleted the task.</a></div>
+        		<div class="slide2"><a class="undo" href="#"></a><a href="#">02.09.2012 01:47: (Task test) I've deleted the task.</a></div>
+        		<div class="slide2"><a class="undo" href="#"></a><a href="#">02.09.2012 01:47: (Task test) I've deleted the task.</a></div>
+        		<div class="slide2"><a class="undo" href="#"></a><a href="#">02.09.2012 01:47: (Task test) I've deleted the task.</a></div>
+        		<div class="slide2"><a class="undo" href="#"></a><a href="#">02.09.2012 01:47: (Task test) I've deleted the task.</a></div>
+        	</div>
+        	<div class="h-separation" style="margin-bottom:11px;"></div>
+        	<div class="notification-container">
+        		<div class="notifications2" ><a class="close" href="#"></a>You are using the free <strong>basic access</strong>. <a class="visible-link" href="#">Upgrade Now!</a></div>
+        		<div class="notifications2"><a class="close" href="#"></a>Enter your phone number to perform tasks to deposit over the phone.  Then call the number 06151/6294955 and read to your task.</div>
+        		<div class="notifications3">You can currently only award tasks to yourself, Because you need to activate your account by clicking on the link in the email that we sent you. <a class="visible-link" href="#">send activation code</a>.</div>
+        	</div>
+        	<div class="h-separation" style="margin:11px 0 11px 0;"></div>
+        	<input name="new-task" class="fields new-task" type="text" value="New Task..." onfocus="if (this.value == 'New Task...') {this.value = '';}" onblur="if (this.value == '') {this.value = 'New Task...';}" />
+		</div>
+	
+    	<div id="Right-columns">
+			<div class="tasks-container my_column">
+				<div style="width:100%">
+					<div style="width:72%; float:left;">
+						<div class="tasks-sorting">
+							<input type="checkbox" style="display:none;" />
+    						<div class="check-all "></div>
+        					<div class="v-separation2"></div>
+        					<div class="sorting-icon"></div>
+            
+        					<div class="dropdown2">
+            					<div class="selectBox2" style="display:none;">
+									<select id="source1" name="a" class="drop_down">
+                                        <option class="option_hover" value="Option 1" >Status</option>
+                                        <option class="option_hover" value="Option 2">Schlagworte</option>
+                                        <option class="option_hover" value="Option 3">Von</option>
+                                        <option class="option_hover" selected="selected" value="Option 4">Für</option>
+                                        <option class="option_hover" value="Option 5">Vom</option>
+                                        <option class="option_hover" value="Option 6">Fällig</option>
+                                        <option class="option_hover" value="Option 7">Update</option>
+                                    </select>
+								</div>
+								<div id="selectBox1_new"></div>
+							</div>
+            
+                            <div class="dropdown2">
+                                <div class="selectBox2" style="display:none;">
+                                    <select id="source2" name="a" class="drop_down">
+                                        <option class="option_hover" value="Option 1" >Aufsteigend</option>
+                                        <option class="option_hover" selected="selected" value="Option 2">Absteigend</option>
+                                    </select>
+                                </div>
+                                <div id="selectBox2_new"></div>
+                            </div>
+                             <div class="dropdown2">
+                                <div class="selectBox2" style="display:none;">
+                                    <select id="source3" name="a" class="drop_down">
+                                        <option class="option_hover" value="Option 1" >Seite 1</option>
+                                        <option class="option_hover" selected="selected" value="Option 2">Seite 2</option>
+                                        <option class="option_hover" value="Option 1" >Seite 1</option>
+                                        <option class="option_hover" value="Option 1" >Seite 1</option>
+                                        <option class="option_hover" value="Option 1" >Seite 1</option>
+                                        <option class="option_hover" value="Option 1" >Seite 1</option>
+                                        <option class="option_hover" value="Option 1" >Seite 1</option>
+                                    </select>
+                                </div>
+                                <div id="selectBox3_new"></div>
+                            </div>
+                            <a href="#" class="print" onclick="window.print();return false;"></a>
+                            <a href="#" class="export"></a>
+                        </div>
+					</div> 
+                    
+                    <div style="width:28%; float:right;">      
+                        <div class="right-top">     
+                            <div class="sorting">Status</div>
+                            <div class="v-separation3"></div>
+                            <div class="sorting">For/Due</div>
+                            <div class="v-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    
+                    <div class="msg">30 items selected. <a class="visible-link" href="#">Select all</a> 49 tasks in this filter</div>
+            
+                    <div class="categories2">
+                        <div class="v-dotted-separation"></div>
+                        <div class="sep-bg"><div class="title9">More than 4 weeks</div><div class="nb-3">9</div></div>
+                    </div> 
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check"></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                        
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span><div class="task-msg">Task Needs to be Accepted</div>thisi s a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                        <div class="clear" style="margin-bottom:6px;"></div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check"></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                        
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>this is a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;"/>
+                            <div class="check"></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span class="highlighted">Test 3 Test 3 Test 3 Test 3 Test 3 Test 3</span></div>
+                                <div class="tags-sub">Profession, Development</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_75">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                    <div class="date-icons">
+                                        <div class="due-icon"></div>
+                                        <div class="per-icon"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check"></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span><div class="attachments-icon"></div>this is a test task and i would like to do it as soon as I have time for it. this is a test task and i would like to do it as soon as I have time for it. this is a test task and i would like to do it as soon as I have time for it. this is a test task and i would like to do it as soon as I have time.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check"></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>This is a test task and I will do it as soon as I have a time for it</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                    <div class="date-icons">
+                                        <div class="due-icon"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check"></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;"/>
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span><div class="attachments-icon"></div>this is a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>this is a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_25">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;"  />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>this is a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>this is a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                        
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                     
+                    <div class="categories4">
+                        <div class="v-dotted-separation"></div>
+                        <div class="sep-bg"><div class="title9">An other tab</div><div class="nb-3">9</div></div>
+                    </div> 
+                    
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>this is a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_25">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;"  />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>this is a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>this is a test task and i would like to do it as soon as I have time for it.</span></div>
+                                <div class="tags-sub">Profession, communication</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="task4">
+                        <div class="task-left">
+                            <input type="checkbox" style="display:none;" />
+                            <div class="check "></div>
+                            <div class="dotted-separation"></div>
+                            <input type="checkbox" style="display:none;" />
+                            <div class="mark "></div>
+                            <div style="margin-left: 53px;padding-left: 24px;">
+                                <div class="title10"><span>New Task - Calendar Test</span></div>
+                                <div class="tags-sub">Calendar Test</div>
+                            </div>
+                        </div>
+                        <div style="width:28%; float:right;">
+                            <div class="status_outer">
+                                <div class="status status-progress_100 status-progress_50">
+                                    <a href="#" class="status-progress status-progress_100_active" title="100%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_25_active" title="25%" style=""></a>
+                                    <div class="clear"></div>
+                                    <a href="#" class="status-progress status-progress_75_active" title="75%" style=""></a>
+                                    <a href="#" class="status-progress status-progress_50_active" title="50%" style=""></a>
+                                </div>
+                            </div>
+                            <div class="dotted-separation2"></div>
+                            <div class="sorting2">
+                                <div class="author">ME</div>
+                                <div class="sorting-date">
+                                    <span>27.01.2012</span>
+                                </div>
+                            </div>
+                            <div class="dotted-separation3"></div>
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    
+				</div>
+			</div><!-- .task container -->
+  			<div style="float:right; width:35%;">
+			<div class="right-form">
+				<div id="new_task">
+					<div class="inside-conner"></div>
+                    <input type="text" class="fields for" id="combobox" onfocus="if(this.value == 'For') {this.value = '';}" onblur="if (this.value == '') {this.value = 'For';}" value="For" name="for"  /> 
+                    <input type="text" class="fields visible-to" id="combobox3" onfocus="if(this.value == 'Visible To') {this.value = '';}" onblur="if (this.value == '') {this.value = 'Visible To';}" value="Visible To" name="Visible To"  /> 
+                    <input type="text" class="fields tags" id="combobox2" onfocus="if(this.value == 'Tags') {this.value = '';}" onblur="if (this.value == '') {this.value = 'Tags';}" value="Tags" name="saved"  /> 
+                    <input name="new-task" class="fields due" type="text" value="Due" onfocus="if (this.value == 'Due') {this.value = '';}" onblur="if (this.value == '') {this.value = 'Due';}" />
+                    <input name="new-task" class="fields reminder" type="text" value="Reminder" onfocus="if (this.value == 'Reminder') {this.value = '';}" onblur="if (this.value == '') {this.value = 'Reminder';}" />
+                    <div class="popup-btn">
+                        <div class="sep-bg2"><div class="title11">Details</div><div class="fullscreen" title="Full Screen"></div></div>
+                    </div>
+                    <textarea name="message" class="message" onFocus="this.value=''; return false;">Type the details here.</textarea>
+                    
+                  
+                    <div class="form-options">
+                        <div class="attachments">add attachment<input name="attach" type="file" class="input-file" /></div>
+                        <div class="high-priority"><input type="checkbox" style="display:none;" /><div class="check2" style="float:right; margin:0 -15px 0 5px;"></div>high priority</div>
+                    </div>
+                  <input type="submit" class="save" name="mysubmit" value="Save" />
+				</div>
+		
+                <div id="selected_task">
+                    <div class="inside-conner"></div>
+                    <input name="new-task" class="fields2 selected_task" type="text" value="New Task Title"/>
+                    <div style="width:100%;">
+                    	<span style="float:left; padding-left: 30px; margin-right: 5px;">For:</span>
+                        <div class="task_for_s">
+                    		<input type="text" class="fields3 visible-to selected_task" id="combobox" name="visible"  /> 
+                    	</div>
+                    </div>
+                   <div style="width:100%;">
+						<span style="float:left; padding-left: 30px; margin-right: 5px;">Visible To:</span>
+                        <div class="task-visible">
+                    		<input type="text" class="fields3 visible-to selected_task" id="combobox" value="Everyone" name="visible"  /> 
+                        </div>
+                   </div>
+                    <div style="width:100%;">
+                        <span style="float:left; padding-left: 30px; margin-right: 5px;">Keywords:</span>
+                        <div class="task-keywords">
+                            <input type="text" class="fields3 visible-to selected_task" id="combobox" name="visible"/>
+                        </div>
+                    </div>
+                
+                    <div class="due-options">
+                        <a href="#" class="close2"></a>
+                        <input type="text" class="gldp due3" id="date1" value="Date">
+                        <div class="clock">
+                            <div class="selectBox2" style="display:none;">
+                            <select id="source4" name="a" class="drop_down">
+                            <option class="option_hover" value="Option 1" >00:00</option>
+                            <option class="option_hover" selected="selected" value="Option 2">00:10</option>
+                            <option class="option_hover" value="Option 3">00:15</option>
+                            <option class="option_hover" value="Option 4">00:20</option>
+                            <option class="option_hover" value="Option 4">00:20</option>
+                            <option class="option_hover" value="Option 5">00:25</option>
+                            <option class="option_hover" value="Option 6">00:30</option>
+                            </select>
+                            </div>
+                            <div id="selectBox4_new"></div>
+                        </div>
+                        <span class="seperator">|</span>
+                        <div class="clock2">
+                            <div class="selectBox2" style="display:none;">
+                            <select id="source5" name="a" class="drop_down">
+                            <option class="option_hover" value="Option 1" >1x pro Tag</option>
+                            <option class="option_hover" selected="selected" value="Option 2">1x pro Woche</option>
+                            <option class="option_hover" value="Option 3" >1x pro Monat</option>
+                            <option class="option_hover" value="Option 4" >1x pro Jahr</option>
+                            <option class="option_hover" value="Option 5" >1x pro Quartal</option>
+                            <option class="option_hover" value="Option 6" >1x alle 2 Wochen</option>
+                            <option class="option_hover" value="Option 7" >1x alle 4 Wochen</option>
+                            <option class="option_hover" value="Option 8" >1x alle 6 Wochen</option>
+                            </select>
+                            </div>
+                            <div id="selectBox5_new"></div>
+                        </div>
+                    </div>
+                
+                    <div style="width:100%;"><span style="float:left; padding-left: 30px; margin-right: 5px;">Reminder:</span><div class="task-reminder" onClick="this.contentEditable='true';">6 days before due date.</div></div>
+                    <div style="width:100%;"><span style="float:left; padding-left: 30px; margin-right: 5px;">Details:</span><div class="task-details" onClick="this.contentEditable='true';"><span>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</span></div></div>
+                    <div class="h-dotted-separation"></div>
+                    <div class="comments">
+                        <div class="sep-bg2"><div class="title11">Comments and Updates</div><div class="nb-4">3</div></div>
+                    </div>
+                    <div class="comment-container">
+                    <div class="users">Waleed Aslam  <span class="time">an hour ago</span></div>
+                        <div class="clear"></div>
+                        <div class="comment"><a href="#" class="remove-commment"></a>Comments for this task will go here, Also every updates.</div>
+                    </div>
+                    <div class="update">Waleed Aslam accepted this task.  12 hours ago</div>
+                    <div class="comment-container">
+                        <div class="users">Waleed Aslam  <span class="time">yesterday</span></div>
+                        <div class="clear"></div>
+                        <div class="comment"><a href="#" class="remove-commment"></a>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. </div>
+                    </div>
+                    <div class="comment-field-box"><textarea placeholder="Comment..." class="comment-field" cols="30" rows="1"></textarea></div>
+                    <div class="clear"></div>
+                    <div style="width:210px; float:left;">
+                        <a href="#" class="attachments2">Attach a file</a>
+                        <div class="v-separation4"></div>
+                        <a href="#" class="high-priority2">High Priority</a>
+                    </div>
+                    <input type="button" class="post" name="submit" value="Post" style=" float:right; margin-top: -1px; margin-right: 9px;"/>
+                </div>
+                <div id="checked_tasks">
+                <div class="inside-conner"></div>
+                    <input type="text" onblur="if (this.value == '') {this.value = 'Tasks';}" onfocus="if (this.value == 'Tasks') {this.value = '';}" value="Tasks" class="fields tasks" name="tasks">
+                    <input type="text" onblur="if (this.value == '') {this.value = 'Put to due';}" onfocus="if (this.value == 'Put to due') {this.value = '';}" value="Put to due" class="fields put_to_due" name="put_to_due">
+                    <input type="text" onblur="if (this.value == '') {this.value = 'Assign Tags';}" onfocus="if (this.value == 'Assign Tags') {this.value = '';}" value="Assign Tags" class="fields assign_tags" name="assign_tags">
+                </div>
+			</div><!-- .right-form -->
+            
+            
+</div>
+		</div>
+	</div>
+</div>
+
+<!--=============================Footer=============================-->
+
+<div class="clear"></div>
+
+<div id="footer">
+  <div class="footer-l">
+      <div class="footer-logo"></div>
+      <div style="float:left;" >
+        <div class="footer-nav">
+            <div class="footer-link"><a href="#">Tasks</a></div>
+            <div class="footer-link"><a href="#">Administrative</a></div>
+            <div class="footer-link"><a href="#">Access</a></div>
+            <div class="footer-link"><a href="#">Help</a></div>
+            <div class="footer-link"><a href="#">Terms of Service</a></div>
+            <div class="footer-link"><a href="#">Privacy Policy</a></div>
+        </div>
+        <div class="clear"></div>
+        <div class="copyright">© 2012 Netagenda.</div>
+        </div>
+  </div>
+  <div class="footer-r">
+  	<div class="social">
+		<a class="fb" href="#"></a>
+        <a class="twitter" href="#"></a>
+  	</div>
+	<div class="footer-text">Follow us:</div>
+  </div>
+</div>
+
+<script type='text/javascript'><!--
+			$(document).ready(function() {
+				enableSelectBoxes();
+			});
+			
+			function enableSelectBoxes(){
+				$('div.selectBox,div.selectBox2,div.selectBox3,div.selectBox4').each(function(){
+					$(this).children('span.selected,span.selected2,span.selected3,span.selected4').html($(this).children('div.selectOptions,div.selectOptions2,div.selectOptions2,div.selectOptions3').children('span.selectOption:first,span.selectOption2:first,span.selectOption3:first').html());
+					$(this).attr('value',$(this).children('div.selectOptions,div.selectOptions2,div.selectOptions3').children('span.selectOption:first,span.selectOption2:first,span.selectOption3:first').attr('value'));
+					
+					$(this).children('span.selected,span.selected2,span.selectArrow,span.selectArrow2,span.selected3,span.selectArrow3,span.selected4').click(function(){
+						if($(this).parent().children('div.selectOptions,div.selectOptions2,div.selectOptions3').css('display') == 'none'){
+							$(this).parent().children('div.selectOptions,div.selectOptions2,div.selectOptions3').css('display','block');
+						}
+						else
+						{
+							$(this).parent().children('div.selectOptions,div.selectOptions2,div.selectOptions3').css('display','none');
+						}
+					});
+					
+					$(this).find('span.selectOption,span.selectOption2,span.selectOption3').click(function(){
+						$(this).parent().css('display','none');
+						$(this).closest('div.selectBox,div.selectBox2,div.selectBox3,div.selectBox4').attr('value',$(this).attr('value'));
+						$(this).parent().siblings('span.selected,span.selected2,span.selected3,span.selected4').html($(this).html());
+					});
+				});				
+			}//-->
+</script>
+</body>
+</html>
